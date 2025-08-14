@@ -43,8 +43,7 @@ espanoloo/
 │   ├── tutorial_introduccion_programacion.md
 │   └── guia_instalacion_uso.md
 ├── examples/                   # Ejemplos de código
-├── tests/                      # Pruebas unitarias
-├── bitacora_desarrollo.md      # Registro de desarrollo
+
 └── README.md                   # Este archivo
 ```
 
