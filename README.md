@@ -43,7 +43,6 @@ espanoloo/
 │   ├── tutorial_introduccion_programacion.md
 │   └── guia_instalacion_uso.md
 ├── examples/                   # Ejemplos de código
-
 └── README.md                   # Este archivo
 ```
 
