@@ -1,0 +1,96 @@
+{
+  "Function Declaration": {
+    "prefix": "funcion",
+    "body": [
+      "funcion ${1:nombreFuncion}(${2:parametros}): ${3:tipoRetorno} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Declara una nueva función"
+  },
+  "Class Declaration": {
+    "prefix": "clase",
+    "body": [
+      "clase ${1:NombreClase} {",
+      "\tconstructor(${2:parametros}) {",
+      "\t\t$0",
+      "\t}",
+      "}"
+    ],
+    "description": "Declara una nueva clase"
+  },
+  "If Statement": {
+    "prefix": "si",
+    "body": [
+      "si (${1:condicion}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Crea una sentencia si"
+  },
+  "If-Else Statement": {
+    "prefix": "sino",
+    "body": [
+      "si (${1:condicion}) {",
+      "\t$2",
+      "} sino {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Crea una sentencia si-sino"
+  },
+  "For Loop": {
+    "prefix": "para",
+    "body": [
+      "para (${1:inicializacion}; ${2:condicion}; ${3:actualizacion}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Crea un bucle para"
+  },
+  "For-Each Loop": {
+    "prefix": "paracada",
+    "body": [
+      "para (${1:elemento} en ${2:coleccion}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Crea un bucle para-cada"
+  },
+  "While Loop": {
+    "prefix": "mientras",
+    "body": [
+      "mientras (${1:condicion}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Crea un bucle mientras"
+  },
+  "Try-Catch-Finally Block": {
+    "prefix": "intentar",
+    "body": [
+      "intentar {",
+      "\t$1",
+      "} atrapar (${2:excepcion}: ${3:TipoExcepcion}) {",
+      "\t$4",
+      "} finalmente {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Crea un bloque intentar-atrapar-finalmente"
+  },
+  "Assert Statement": {
+    "prefix": "afirmar",
+    "body": [
+      "afirmar(${1:condicion}, \"${2:mensaje}\");"
+    ],
+    "description": "Crea una sentencia afirmar"
+  },
+  "Return Statement": {
+    "prefix": "retornar",
+    "body": [
+      "retornar ${1:valor};"
+    ],
+    "description": "Crea una sentencia retornar"
+  }
+}

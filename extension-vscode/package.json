@@ -1,0 +1,85 @@
+{
+  "name": "espanoloo",
+  "displayName": "EspañolOO",
+  "description": "Soporte para el lenguaje de programación EspañolOO en VS Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "espanoloo",
+      "aliases": ["EspañolOO", "espanoloo"],
+      "extensions": [".eoo"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "espanoloo",
+      "scopeName": "source.espanoloo",
+      "path": "./syntaxes/espanoloo.tmLanguage.json"
+    }],
+    "debuggers": [
+      {
+        "type": "espanoloo",
+        "label": "EspañolOO Debug",
+        "configurationSnippets": [
+          {
+            "label": "EspañolOO: Depurar Archivo",
+            "description": "Crea una configuración launch.json para depurar un archivo EspañolOO.",
+            "body": {
+              "name": "EspañolOO: Depurar Archivo",
+              "type": "espanoloo",
+              "request": "launch",
+              "program": "${file}",
+              "console": "integratedTerminal"
+            }
+          }
+        ],
+        "initialConfigurations": [
+          {
+            "name": "EspañolOO: Depurar Archivo",
+            "type": "espanoloo",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+          }
+        ]
+      }
+    ],
+    "commands": [],
+    "keybindings": [],
+    "menus": [],
+    "snippets": [],
+    "breakpoints": [],
+    "walkthroughs": [],
+    "views": {},
+    "viewsWelcome": [],
+    "customEditors": [],
+    "authentication": [],
+    "taskDefinitions": [],
+    "typescriptServerPlugins": [],
+    "jsonValidation": []
+  },
+  "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
+    "eslint": "^8.47.0",
+    "typescript": "^5.1.6",
+    "@vscode/test-electron": "^2.3.4"
+  }
+}
