@@ -3,6 +3,10 @@
   "displayName": "EspañolOO",
   "description": "Soporte para el lenguaje de programación EspañolOO en VS Code",
   "icon": "img/logo_eoo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gustavopaez-profe-pana/espanoloo.git"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
