@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { EspanolOOCompletionProvider } from './completion';
-import { EspanolOODebugConfigurationProvider } from './debug';
+import { EspanolOODebugAdapterDescriptorFactory } from './debug';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('La extensión "EspañolOO" está activa.');

@@ -26,13 +26,19 @@ interface PythonScriptExecutionResult {
  * 3. Guarda el código Python en un archivo temporal.
  * 4. Modifica la configuración de lanzamiento para que VS Code inicie el depurador de Python estándar sobre ese archivo temporal.
  */
-export class EspanolOODebugConfigurationProvider implements vscode.DebugConfigurationProvider {
+export class EspanolOODebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
 
     constructor(private context: vscode.ExtensionContext) { }
 
     async createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
+        if (!session.workspaceFolder) {
+            vscode.window.showErrorMessage('No se puede depurar sin una carpeta de espacio de trabajo abierta.');
+            return undefined;
+        }
         const compilerBridgePath = vscode.Uri.joinPath(session.workspaceFolder.uri, 'espanoloo_compiler', 'compiler_bridge.py').fsPath;
         const programPath = session.configuration.program;
+
+        let tempPythonFile: string; // Declare outside try block
 
         if (!fs.existsSync(compilerBridgePath)) {
             vscode.window.showErrorMessage('No se encontró el archivo compiler_bridge.py. Asegúrate de que el compilador EspañolOO esté en la raíz del workspace.');
