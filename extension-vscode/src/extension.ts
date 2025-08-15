@@ -17,10 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Registrar el proveedor de configuración de depuración
     context.subscriptions.push(
-        vscode.debug.registerDebugConfigurationProvider(
-            'espanoloo', // El tipo de depurador que estamos interceptando
-            new EspanolOODebugConfigurationProvider(context)
-        )
+        vscode.debug.registerDebugAdapterDescriptorFactory('espanoloo', new EspanolOODebugAdapterDescriptorFactory(context))
     );
 }
 

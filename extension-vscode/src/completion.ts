@@ -7,7 +7,7 @@ export class EspanolOOCompletionProvider implements vscode.CompletionItemProvide
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
     }
-    async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList>> {
+    async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | vscode.CompletionList | null | undefined> {
         const keywords = [
             "clase", "funcion", "si", "sino", "mientras", "para", "retornar",
             "publico", "privado", "protegido", "nuevo", "este", "super",

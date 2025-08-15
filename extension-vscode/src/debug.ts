@@ -31,7 +31,7 @@ export class EspanolOODebugConfigurationProvider implements vscode.DebugConfigur
     constructor(private context: vscode.ExtensionContext) { }
 
     async createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
-        const compilerBridgePath = vscode.Uri.joinPath(session.workspace.uri, 'espanoloo_compiler', 'compiler_bridge.py').fsPath;
+        const compilerBridgePath = vscode.Uri.joinPath(session.workspaceFolder.uri, 'espanoloo_compiler', 'compiler_bridge.py').fsPath;
         const programPath = session.configuration.program;
 
         if (!fs.existsSync(compilerBridgePath)) {
@@ -75,12 +75,8 @@ export class EspanolOODebugConfigurationProvider implements vscode.DebugConfigur
 
             // In a real scenario, you would launch a Python debugger here
             // For simplicity, we're just showing output.
-            return new vscode.DebugAdapterInlineImplementation({
-                type: 'python',
-                request: 'launch',
-                program: pythonCode, // This would be the path to the generated .py file
-                console: 'integratedTerminal'
-            });
+            const pythonPath = vscode.workspace.getConfiguration('python').get<string>('defaultInterpreterPath') || 'python';
+            return new vscode.DebugAdapterExecutable(pythonPath, [tempPythonFile]);
 
         } catch (error: any) {
             vscode.window.showErrorMessage(`Error durante la preparación de la depuración: ${error.message}`);
