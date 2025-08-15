@@ -65,6 +65,10 @@
     "jsonValidation": []
   },
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:espanoloo",
+    "onDebug:espanoloo"
+  ],
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
