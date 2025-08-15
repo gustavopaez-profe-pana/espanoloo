@@ -38,7 +38,7 @@ export class EspanolOODebugAdapterDescriptorFactory implements vscode.DebugAdapt
         const compilerBridgePath = vscode.Uri.joinPath(session.workspaceFolder.uri, 'espanoloo_compiler', 'compiler_bridge.py').fsPath;
         const programPath = session.configuration.program;
 
-        let tempPythonFile: string; // Declare outside try block
+        let tempPythonFile: string = ''; // Initialize to empty string
 
         if (!fs.existsSync(compilerBridgePath)) {
             vscode.window.showErrorMessage('No se encontró el archivo compiler_bridge.py. Asegúrate de que el compilador EspañolOO esté en la raíz del workspace.');
