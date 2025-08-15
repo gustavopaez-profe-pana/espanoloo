@@ -10,7 +10,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider(
             selector,
-            new EspanolOOCompletionProvider(),
+            new EspanolOOCompletionProvider(context), // Pass context here
             '.' // Caracteres que disparan el autocompletado
         )
     );

@@ -2,6 +2,11 @@ import * as vscode from 'vscode';
 import { spawn } from 'child_process'; // Import child_process
 
 export class EspanolOOCompletionProvider implements vscode.CompletionItemProvider {
+    private context: vscode.ExtensionContext;
+
+    constructor(context: vscode.ExtensionContext) {
+        this.context = context;
+    }
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList>> {
         const keywords = [
             "clase", "funcion", "si", "sino", "mientras", "para", "retornar",
@@ -24,17 +29,17 @@ export class EspanolOOCompletionProvider implements vscode.CompletionItemProvide
         try {
             // Call the Python analysis server
             const pythonProcess = spawn('python', [
-                vscode.Uri.joinPath(context.extensionUri, 'espanoloo_compiler', 'analysis_server.py').fsPath
+                vscode.Uri.joinPath(this.context.extensionUri, 'espanoloo_compiler', 'analysis_server.py').fsPath
             ]);
 
             let stdout = '';
             let stderr = '';
 
-            pythonProcess.stdout.on('data', (data) => {
+            pythonProcess.stdout.on('data', (data: string) => {
                 stdout += data.toString();
             });
 
-            pythonProcess.stderr.on('data', (data) => {
+            pythonProcess.stderr.on('data', (data: string) => {
                 stderr += data.toString();
             });
 
@@ -42,7 +47,7 @@ export class EspanolOOCompletionProvider implements vscode.CompletionItemProvide
                 pythonProcess.stdin.write(codeText);
                 pythonProcess.stdin.end(); // Close stdin to signal end of input
 
-                pythonProcess.on('close', (code) => {
+                pythonProcess.on('close', (code: number) => {
                     if (code === 0) {
                         resolve();
                     } else {
@@ -50,7 +55,7 @@ export class EspanolOOCompletionProvider implements vscode.CompletionItemProvide
                     }
                 });
 
-                pythonProcess.on('error', (err) => {
+                pythonProcess.on('error', (err: Error) => {
                     reject(err);
                 });
             });

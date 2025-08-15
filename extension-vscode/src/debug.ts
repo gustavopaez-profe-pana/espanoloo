@@ -4,6 +4,20 @@ import * as os from 'os';
 import * as fs from 'fs';
 import { spawn } from 'child_process';
 
+interface AnalysisServerResult {
+    success: boolean;
+    symbols?: any[];
+    ast?: any;
+    error?: string;
+    details?: string;
+}
+
+interface PythonScriptExecutionResult {
+    stdout: string;
+    stderr: string;
+    code: number;
+}
+
 /**
  * Resuelve la configuración de depuración para EspañolOO.
  * Esta clase actúa como un paso de "pre-lanzamiento".
@@ -16,64 +30,57 @@ export class EspanolOODebugConfigurationProvider implements vscode.DebugConfigur
 
     constructor(private context: vscode.ExtensionContext) { }
 
-    async resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration | undefined> {
+    async createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
+        const compilerBridgePath = vscode.Uri.joinPath(session.workspace.uri, 'espanoloo_compiler', 'compiler_bridge.py').fsPath;
+        const programPath = session.configuration.program;
 
-        // Si no hay un programa definido, no podemos continuar.
-        if (!config.program) {
-            return vscode.window.showInformationMessage("No se puede iniciar el depurador: el atributo 'program' no está definido en launch.json.").then(() => {
-                return undefined;
-            });
+        if (!fs.existsSync(compilerBridgePath)) {
+            vscode.window.showErrorMessage('No se encontró el archivo compiler_bridge.py. Asegúrate de que el compilador EspañolOO esté en la raíz del workspace.');
+            return undefined;
         }
 
-        const activeEditor = vscode.window.activeTextEditor;
-        if (!activeEditor || activeEditor.document.uri.toString() !== config.program) {
-             await vscode.window.showErrorMessage('Por favor, abra el archivo EspañolOO que desea depurar y asegúrese de que coincida con el atributo "program" en su launch.json.');
-             return undefined;
+        if (!fs.existsSync(programPath)) {
+            vscode.window.showErrorMessage(`No se encontró el archivo de programa: ${programPath}`);
+            return undefined;
         }
-        
-        const espanolooCode = activeEditor.document.getText();
-        const baseName = path.basename(activeEditor.document.fileName, '.eoo');
-        const tempDir = path.join(os.tmpdir(), 'espanoloo_debug');
 
         try {
-            // Asegurarse de que el directorio temporal exista
-            if (!fs.existsSync(tempDir)) {
-                fs.mkdirSync(tempDir);
+            // Step 1: Compile the EspañolOO program to Python
+            const compileRawResult = await this.runPythonScript(compilerBridgePath, programPath);
+
+            if (compileRawResult.code !== 0) {
+                vscode.window.showErrorMessage(`Error de compilación de EspañolOO: Proceso Python terminó con código ${compileRawResult.code}. Stderr: ${compileRawResult.stderr}`);
+                return undefined;
             }
 
-            // 1. Llamar a analysis_server.py para obtener el AST en formato JSON
-            const analysisServerPath = path.join(this.context.extensionPath, 'espanoloo_compiler', 'analysis_server.py');
-            const analysisResult = await this.runPythonScript(analysisServerPath, espanolooCode);
+            const analysisResult: AnalysisServerResult = JSON.parse(compileRawResult.stdout);
 
             if (analysisResult.error) {
-                vscode.window.showErrorMessage(`Error en el análisis del código EspañolOO: ${analysisResult.error} - ${analysisResult.details || ''}`);
+                vscode.window.showErrorMessage(`Error de compilación de EspañolOO: ${analysisResult.error}. Detalles: ${analysisResult.details}`);
                 return undefined;
             }
 
-            // 2. Llamar a compiler_bridge.py para generar código Python desde el AST JSON
-            const compilerBridgePath = path.join(this.context.extensionPath, 'espanoloo_compiler', 'compiler_bridge.py');
-            // Pasamos el AST completo, no solo los símbolos
-            const generatedPythonResult = await this.runPythonScript(compilerBridgePath, JSON.stringify(analysisResult.ast));
+            // Step 2: Execute the generated Python code
+            const generatedPythonRawResult = await this.runPythonScript(compilerBridgePath, JSON.stringify(analysisResult.ast));
 
-            if (generatedPythonResult.error) {
-                vscode.window.showErrorMessage(`Error en la generación de código Python: ${generatedPythonResult.error} - ${generatedPythonResult.details || ''}`);
+            if (generatedPythonRawResult.code !== 0) {
+                vscode.window.showErrorMessage(`Error de ejecución del código Python generado: Proceso Python terminó con código ${generatedPythonRawResult.code}. Stderr: ${generatedPythonRawResult.stderr}`);
                 return undefined;
             }
-            
-            const pythonCode = generatedPythonResult.output;
 
-            // 3. Guardar el código Python generado en un archivo temporal
-            const tempPythonFile = path.join(tempDir, `${baseName}_debug.py`);
-            fs.writeFileSync(tempPythonFile, pythonCode);
+            const pythonCode = generatedPythonRawResult.stdout;
 
-            // 4. Modificar la configuración de lanzamiento para usar el depurador de Python
-            config.type = 'python';
-            config.request = 'launch';
-            config.program = tempPythonFile; // Apuntar al archivo temporal
-            config.justMyCode = config.justMyCode !== undefined ? config.justMyCode : false; // Permitir entrar en código que no es del usuario
-            config.name = `Depurar (EspañolOO: ${baseName})`; // Nombre dinámico para la sesión de depuración
+            // For now, just show the output in the debug console
+            vscode.debug.activeDebugConsole.appendLine(pythonCode);
 
-            return config;
+            // In a real scenario, you would launch a Python debugger here
+            // For simplicity, we're just showing output.
+            return new vscode.DebugAdapterInlineImplementation({
+                type: 'python',
+                request: 'launch',
+                program: pythonCode, // This would be the path to the generated .py file
+                console: 'integratedTerminal'
+            });
 
         } catch (error: any) {
             vscode.window.showErrorMessage(`Error durante la preparación de la depuración: ${error.message}`);
@@ -81,7 +88,7 @@ export class EspanolOODebugConfigurationProvider implements vscode.DebugConfigur
         }
     }
 
-    private runPythonScript(scriptPath: string, input: string): Promise<{output: string, error?: string, details?: string}> {
+    private runPythonScript(scriptPath: string, input: string): Promise<PythonScriptExecutionResult> {
         return new Promise((resolve, reject) => {
             const pythonPath = vscode.workspace.getConfiguration('python').get<string>('defaultInterpreterPath') || 'python';
             const pythonProcess = spawn(pythonPath, [scriptPath]);
@@ -89,30 +96,20 @@ export class EspanolOODebugConfigurationProvider implements vscode.DebugConfigur
             let stdout = '';
             let stderr = '';
 
-            pythonProcess.stdout.on('data', (data) => {
+            pythonProcess.stdout.on('data', (data: string) => {
                 stdout += data.toString();
             });
 
-            pythonProcess.stderr.on('data', (data) => {
+            pythonProcess.stderr.on('data', (data: string) => {
                 stderr += data.toString();
             });
 
-            pythonProcess.on('close', (code) => {
-                if (code === 0) {
-                    // Intentar parsear como JSON, si falla, es salida de texto plano (código generado)
-                    try {
-                        resolve(JSON.parse(stdout));
-                    } catch (e) {
-                        resolve({ output: stdout });
-                    }
-                } else {
-                    // Si hay un error, el stderr es el mensaje principal
-                    reject(new Error(`El script de Python (${path.basename(scriptPath)}) finalizó con el código ${code}. Error: ${stderr}`));
-                }
+            pythonProcess.on('close', (code: number) => {
+                resolve({ stdout, stderr, code });
             });
 
-            pythonProcess.on('error', (err) => {
-                reject(new Error(`No se pudo iniciar el proceso de Python. Asegúrese de que '${pythonPath}' sea correcto. Error: ${err.message}`));
+            pythonProcess.on('error', (err: Error) => {
+                reject(err); // Reject with the actual error
             });
 
             pythonProcess.stdin.write(input);
