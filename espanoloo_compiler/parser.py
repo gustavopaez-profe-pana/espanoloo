@@ -65,8 +65,12 @@ class EspanolOOParser:
             p[0] = DeclaracionVariable(p[1], p[3], p[5])
 
     def p_declaracion_funcion(self, p):
-        'declaracion_funcion : FUNCION IDENTIFICADOR LPAREN lista_parametros_opcional RPAREN tipo_retorno bloque_sentencias'
-        p[0] = DeclaracionFuncion(p[2], p[4], p[6], p[7])
+        'declaracion_funcion : modificador_acceso FUNCION IDENTIFICADOR LPAREN lista_parametros_opcional RPAREN tipo_retorno bloque_sentencias'
+        p[0] = DeclaracionFuncion(p[1], p[3], p[5], p[7], p[8])
+
+    def p_declaracion_constructor(self, p):
+        'declaracion_constructor : modificador_acceso CONSTRUCTOR LPAREN lista_parametros_opcional RPAREN bloque_sentencias'
+        p[0] = DeclaracionConstructor(p[1], p[4], p[6])
 
     def p_declaracion_clase(self, p):
         'declaracion_clase : CLASE IDENTIFICADOR hereda_opcional LBRACE lista_miembros_clase RBRACE'
@@ -87,7 +91,8 @@ class EspanolOOParser:
 
     def p_miembro_clase(self, p):
         """miembro_clase : declaracion_atributo
-                         | declaracion_funcion"""
+                         | declaracion_funcion
+                         | declaracion_constructor"""
         p[0] = p[1]
 
     def p_declaracion_atributo(self, p):
@@ -258,6 +263,10 @@ class EspanolOOParser:
         else:
             p[0] = ExpresionAcceso(p[1], p[3])
 
+    def p_expresion_nueva_instancia(self, p):
+        'expresion_nueva_instancia : NUEVO IDENTIFICADOR LPAREN lista_argumentos_opcional RPAREN'
+        p[0] = ExpresionNuevaInstancia(p[2], p[4])
+
     def p_primaria(self, p):
         """primaria : VERDADERO
                     | FALSO
@@ -268,7 +277,8 @@ class EspanolOOParser:
                     | IDENTIFICADOR
                     | ESTE
                     | SUPER
-                    | LPAREN expresion RPAREN"""
+                    | LPAREN expresion RPAREN
+                    | expresion_nueva_instancia"""
         if p[1] == '(':
             p[0] = ExpresionAgrupada(p[2])
         elif p.slice[1].type in ('VERDADERO', 'FALSO', 'NULO', 'ENTERO', 'DECIMAL', 'CADENA'):
@@ -279,6 +289,8 @@ class EspanolOOParser:
             p[0] = ExpresionEste()
         elif p.slice[1].type == 'SUPER':
             p[0] = ExpresionSuper()
+        else:
+            p[0] = p[1]
 
     # --- REGLAS AUXILIARES ---
     def p_tipo(self, p):

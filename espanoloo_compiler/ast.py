@@ -1,5 +1,3 @@
-
-
 class AST:
     def __init__(self, lineno=None):
         self.lineno = lineno
@@ -33,11 +31,6 @@ class BloqueSentencias(Sentencia):
     def __init__(self, sentencias, lineno=None):
         super().__init__(lineno)
         self.sentencias = sentencias
-
-class SentenciaExpresion(Sentencia):
-    def __init__(self, expresion, lineno=None):
-        super().__init__(lineno)
-        self.expresion = expresion
 
 class Expresion(AST):
     def __init__(self, lineno=None):
@@ -147,12 +140,13 @@ class SentenciaRetornar(Sentencia):
 
 # Clases AST para funciones (Paso 1.3.1)
 class DeclaracionFuncion(Declaracion):
-    def __init__(self, nombre, parametros, tipo_retorno, cuerpo, lineno=None):
+    def __init__(self, modificador_acceso, nombre, parametros, tipo_retorno, cuerpo, lineno=None):
         super().__init__(lineno)
+        self.modificador_acceso = modificador_acceso
         self.nombre = nombre
-        self.parametros = parametros # Lista de Parametro
-        self.tipo_retorno = tipo_retorno # String o None
-        self.cuerpo = cuerpo # SentenciaBloque
+        self.parametros = parametros
+        self.tipo_retorno = tipo_retorno
+        self.cuerpo = cuerpo
 
 class Parametro(AST):
     def __init__(self, nombre, tipo, lineno=None):
@@ -202,16 +196,16 @@ class DeclaracionAtributo(Declaracion):
 
 class DeclaracionMetodo(DeclaracionFuncion): # Hereda de DeclaracionFuncion
     def __init__(self, modificador_acceso, nombre, parametros_tipo, parametros, tipo_retorno, cuerpo, es_abstracto=False, lineno=None):
-        super().__init__(lineno)
-        self.modificador_acceso = modificador_acceso
+        super().__init__(modificador_acceso, nombre, parametros, tipo_retorno, cuerpo, lineno)
         self.parametros_tipo = parametros_tipo # Lista de strings
         self.es_abstracto = es_abstracto
 
 class DeclaracionConstructor(Declaracion):
-    def __init__(self, parametros, cuerpo, lineno=None):
+    def __init__(self, modificador_acceso, parametros, cuerpo, lineno=None):
         super().__init__(lineno)
-        self.parametros = parametros # Lista de Parametro
-        self.cuerpo = cuerpo # SentenciaBloque
+        self.modificador_acceso = modificador_acceso
+        self.parametros = parametros
+        self.cuerpo = cuerpo
 
 # Clases AST para instanciación de objetos y acceso a miembros (Paso 2.1.2)
 class ExpresionNuevaInstancia(Expresion):

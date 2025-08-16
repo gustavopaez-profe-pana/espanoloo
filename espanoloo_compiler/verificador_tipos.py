@@ -127,6 +127,16 @@ class VerificadorTipos:
         # La validación de los argumentos se hará en el VerificadorSemantico.
         return 'nulo'
 
+    def visitar_ExpresionNuevaInstancia(self, nodo):
+        nombre_clase = nodo.nombre_clase
+        simbolo_clase = self.tabla_simbolos.obtener(nombre_clase)
+
+        if not simbolo_clase or simbolo_clase.get('tipo') != 'clase':
+            self.errores.append(f"Error Semántico: La clase '{nombre_clase}' no ha sido declarada.")
+            return 'error'
+
+        return nombre_clase
+
     def visitar_ExpresionAccesoMiembro(self, nodo):
         tipo_objeto = self.visitar(nodo.objeto)
         if tipo_objeto == 'error':

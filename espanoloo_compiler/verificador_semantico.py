@@ -1,5 +1,3 @@
-
-
 from espanoloo_compiler.tabla_simbolos import TablaSimbolos
 from espanoloo_compiler.verificador_tipos import VerificadorTipos
 from espanoloo_compiler.ast import *
@@ -118,7 +116,7 @@ class VerificadorSemantico:
             else:
                 simbolo_clase['hereda_de'] = simbolo_padre
                 # Copiar miembros heredados
-                tabla_padre = simbolo_padre['valor']
+                tabla_padre = simbolo_padre['valor']['valor']
                 for nombre, simbolo in tabla_padre.simbolos.items():
                     if simbolo.get('modificador_acceso') in ['publico', 'protegido']:
                         ambito_clase.simbolos[nombre] = simbolo
@@ -215,5 +213,3 @@ class VerificadorSemantico:
 
         self.tabla_simbolos = tabla_anterior
         self.verificador_tipos.tabla_simbolos = tabla_anterior
-
-    

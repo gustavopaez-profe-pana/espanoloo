@@ -5,6 +5,7 @@ class GeneradorCodigo:
         self.codigo = []
         self.indentacion = 0
         self.atributos_clase_actual = []
+        self.clase_actual = None
 
     def visitar(self, nodo):
         nombre_metodo = f'visitar_{type(nodo).__name__}'
@@ -12,14 +13,8 @@ class GeneradorCodigo:
         return visitante(nodo)
 
     def visita_generica(self, nodo):
-        # Primero, verificamos si el nodo es una instancia de Expresion. 
-        # Si es así, podría ser un nodo que no hemos implementado todavía. 
         if isinstance(nodo, Expresion):
-            # Podríamos querer registrar una advertencia o un error aquí.
-            # Por ahora, simplemente devolvemos una cadena vacía.
             return ""
-        # Si no es una expresión, podría ser una sentencia u otra declaración.
-        # En ese caso, es más seguro lanzar una excepción si no hay un método de visita.
         raise Exception(f'No hay un método de visita para el nodo {type(nodo).__name__}')
 
     def agregar_linea(self, linea):
@@ -37,14 +32,13 @@ class GeneradorCodigo:
             self.visitar(declaracion)
 
     def visitar_DeclaracionClase(self, nodo):
+        self.clase_actual = nodo.nombre
         herencia = f"({nodo.hereda_de})" if nodo.hereda_de else ""
         self.agregar_linea(f"class {nodo.nombre}{herencia}:")
         self.indentacion += 1
         
-        # Recolectar atributos primero
         self.atributos_clase_actual = [m for m in nodo.miembros if isinstance(m, DeclaracionAtributo)]
         
-        # Visitar otros miembros (constructor, métodos)
         for miembro in nodo.miembros:
             if not isinstance(miembro, DeclaracionAtributo):
                 self.visitar(miembro)
@@ -52,16 +46,12 @@ class GeneradorCodigo:
         self.indentacion -= 1
         self.agregar_linea("")
         self.atributos_clase_actual = []
+        self.clase_actual = None
 
     def visitar_DeclaracionConstructor(self, nodo):
         parametros = ", ".join([p.nombre for p in nodo.parametros])
         self.agregar_linea(f"def __init__(self, {parametros}):")
         self.indentacion += 1
-        
-        # Inicializar atributos
-        for attr in self.atributos_clase_actual:
-            self.visitar(attr)
-
         self.visitar(nodo.cuerpo)
         self.indentacion -= 1
         self.agregar_linea("")
@@ -75,7 +65,6 @@ class GeneradorCodigo:
         self.agregar_linea("")
 
     def visitar_DeclaracionAtributo(self, nodo):
-        # La inicialización se hace en el constructor
         if nodo.valor:
             valor = self.visitar(nodo.valor)
             self.agregar_linea(f"self.{nodo.nombre} = {valor}")
@@ -96,18 +85,16 @@ class GeneradorCodigo:
         argumentos = ", ".join([self.visitar(arg) for arg in nodo.argumentos])
         return f"{nodo.nombre_clase}({argumentos})"
 
-    def visitar_ExpresionAccesoMiembro(self, nodo):
+    def visitar_ExpresionAcceso(self, nodo):
         objeto = self.visitar(nodo.objeto)
-        return f"{objeto}.{nodo.miembro.nombre}"
-
-    def visitar_ExpresionLlamadaMetodo(self, nodo):
-        objeto = self.visitar(nodo.objeto)
-        argumentos = ", ".join([self.visitar(arg) for arg in nodo.argumentos])
-        return f"{objeto}.{nodo.metodo.nombre}({argumentos})"
+        return f"{objeto}.{nodo.miembro}"
 
     def visitar_DeclaracionFuncion(self, nodo):
         parametros = ", ".join([p.nombre for p in nodo.parametros])
-        self.agregar_linea(f"def {nodo.nombre}({parametros}):")
+        if self.clase_actual:
+            self.agregar_linea(f"def {nodo.nombre}(self, {parametros}):")
+        else:
+            self.agregar_linea(f"def {nodo.nombre}({parametros}):")
         self.indentacion += 1
         self.visitar(nodo.cuerpo)
         self.indentacion -= 1
@@ -137,6 +124,11 @@ class GeneradorCodigo:
         expresion_str = self.visitar(nodo.expresion)
         if expresion_str:
             self.agregar_linea(expresion_str)
+
+    def visitar_ExpresionAsignacion(self, nodo):
+        objetivo = self.visitar(nodo.objetivo)
+        valor = self.visitar(nodo.valor)
+        return f"{objetivo} = {valor}"
 
     def visitar_ExpresionBinaria(self, nodo):
         izquierda = self.visitar(nodo.izquierda)
@@ -175,9 +167,6 @@ class GeneradorCodigo:
         self.indentacion -= 1
 
     def visitar_SentenciaPara(self, nodo):
-        # Nota: La traducción directa de un for de C a Python no es trivial.
-        # Esto es una simplificación que asume un bucle while.
-        # Una implementación completa requeriría más análisis.
         if nodo.inicializacion:
             self.visitar(nodo.inicializacion)
         condicion = self.visitar(nodo.condicion) if nodo.condicion else "True"
@@ -209,9 +198,18 @@ class GeneradorCodigo:
         return f"({operador}{operando})"
 
     def visitar_ExpresionLlamada(self, nodo):
-        nombre_funcion = self.visitar(nodo.callee)
-        if nombre_funcion == 'imprimir':
-            nombre_funcion = 'print'
-        
-        argumentos = ", ".join([self.visitar(arg) for arg in nodo.argumentos])
-        return f"{nombre_funcion}({argumentos})"
+        if isinstance(nodo.callee, ExpresionSuper):
+            argumentos = ", ".join([self.visitar(arg) for arg in nodo.argumentos])
+            return f"super().__init__({argumentos})"
+        elif isinstance(nodo.callee, ExpresionAcceso):
+            objeto = self.visitar(nodo.callee.objeto)
+            metodo = nodo.callee.miembro
+            argumentos = ", ".join([self.visitar(arg) for arg in nodo.argumentos])
+            return f"{objeto}.{metodo}({argumentos})"
+        else:
+            nombre_funcion = self.visitar(nodo.callee)
+            if nombre_funcion == 'imprimir':
+                nombre_funcion = 'print'
+            
+            argumentos = ", ".join([self.visitar(arg) for arg in nodo.argumentos])
+            return f"{nombre_funcion}({argumentos})"
