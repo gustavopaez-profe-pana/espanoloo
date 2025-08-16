@@ -134,7 +134,9 @@ class GeneradorCodigo:
             self.visitar(sentencia)
 
     def visitar_SentenciaExpresion(self, nodo):
-        self.visitar(nodo.expresion)
+        expresion_str = self.visitar(nodo.expresion)
+        if expresion_str:
+            self.agregar_linea(expresion_str)
 
     def visitar_ExpresionBinaria(self, nodo):
         izquierda = self.visitar(nodo.izquierda)
@@ -206,6 +208,10 @@ class GeneradorCodigo:
         operador = operador_map.get(nodo.operador, nodo.operador)
         return f"({operador}{operando})"
 
-    def visitar_ExpresionLlamadaFuncion(self, nodo):
+    def visitar_ExpresionLlamada(self, nodo):
+        nombre_funcion = self.visitar(nodo.callee)
+        if nombre_funcion == 'imprimir':
+            nombre_funcion = 'print'
+        
         argumentos = ", ".join([self.visitar(arg) for arg in nodo.argumentos])
-        return f"{nodo.nombre}({argumentos})"
+        return f"{nombre_funcion}({argumentos})"
