@@ -64,6 +64,14 @@ class EspanolOOParser:
         else:
             p[0] = DeclaracionVariable(p[1], p[3], p[5])
 
+    def p_declaracion_variable_sin_pc(self, p):
+        """declaracion_variable_sin_pc : IDENTIFICADOR DOS_PUNTOS tipo
+                                       | IDENTIFICADOR DOS_PUNTOS tipo ASIGNACION expresion"""
+        if len(p) == 4:
+            p[0] = DeclaracionVariable(p[1], p[3], None)
+        else:
+            p[0] = DeclaracionVariable(p[1], p[3], p[5])
+
     def p_declaracion_funcion(self, p):
         'declaracion_funcion : modificador_acceso FUNCION IDENTIFICADOR LPAREN lista_parametros_opcional RPAREN tipo_retorno bloque_sentencias'
         p[0] = DeclaracionFuncion(p[1], p[3], p[5], p[7], p[8])
@@ -147,7 +155,7 @@ class EspanolOOParser:
         p[0] = SentenciaPara(p[3], p[5], p[7], p[9])
 
     def p_para_inicializador(self, p):
-        """para_inicializador : declaracion_variable
+        """para_inicializador : declaracion_variable_sin_pc
                               | expresion
                               | empty"""
         p[0] = p[1]
